@@ -4,6 +4,7 @@ import type { Note } from '../lib/db';
 import { renderNoteMarkdown } from '../lib/markdown';
 import { buildLinkGraph } from '../lib/wikilinks';
 import { updateNote } from '../hooks/useNotes';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 type Mode = 'write' | 'preview' | 'split';
 
@@ -14,17 +15,26 @@ interface NoteEditorProps {
 }
 
 export function NoteEditor({ note, allNotes, onNavigateToTitle }: NoteEditorProps) {
+  const isMobile = useIsMobile();
   const [title, setTitle] = useState(note.title);
   const [content, setContent] = useState(note.content);
   const [tagInput, setTagInput] = useState('');
-  const [mode, setMode] = useState<Mode>('split');
+  const [mode, setMode] = useState<Mode>(isMobile ? 'write' : 'split');
+
+  // If the viewport crosses the mobile breakpoint while split is selected
+  // (unreadable at narrow widths), fall back to a single pane.
+  useEffect(() => {
+    if (isMobile && mode === 'split') setMode('write');
+  }, [isMobile, mode]);
   const previewRef = useRef<HTMLDivElement>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Reset local state whenever a different note is opened.
+  // Reset local state whenever a different note is opened (deliberately not
+  // on every note.title/content change, which would clobber in-progress typing).
   useEffect(() => {
     setTitle(note.title);
     setContent(note.content);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [note.id]);
 
   // Debounced autosave.
@@ -92,7 +102,7 @@ export function NoteEditor({ note, allNotes, onNavigateToTitle }: NoteEditorProp
           {(
             [
               ['write', Pencil],
-              ['split', Columns2],
+              ...(isMobile ? [] : [['split', Columns2] as const]),
               ['preview', Eye],
             ] as const
           ).map(([m, Icon]) => (

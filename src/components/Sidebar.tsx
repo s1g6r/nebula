@@ -9,6 +9,8 @@ interface SidebarProps {
   onSelect: (id: string) => void;
   onCreate: () => void;
   onDelete: (id: string) => void;
+  open: boolean;
+  onClose: () => void;
 }
 
 function relativeTime(ts: number): string {
@@ -23,7 +25,7 @@ function relativeTime(ts: number): string {
   return new Date(ts).toLocaleDateString();
 }
 
-export function Sidebar({ notes, selectedId, onSelect, onCreate, onDelete }: SidebarProps) {
+export function Sidebar({ notes, selectedId, onSelect, onCreate, onDelete, open, onClose }: SidebarProps) {
   const [query, setQuery] = useState('');
   const [activeTag, setActiveTag] = useState<string | null>(null);
 
@@ -36,8 +38,19 @@ export function Sidebar({ notes, selectedId, onSelect, onCreate, onDelete }: Sid
   }, [notes, query, activeTag]);
 
   return (
-    <div className="w-72 shrink-0 border-r border-black/10 dark:border-white/10 flex flex-col h-full bg-gray-50/60 dark:bg-white/[0.02]">
-      <div className="p-3 flex flex-col gap-2 border-b border-black/5 dark:border-white/5">
+    <>
+      {open && (
+        <div
+          onClick={onClose}
+          className="fixed inset-0 bg-black/40 z-40 md:hidden"
+        />
+      )}
+      <div
+        className={`fixed inset-y-0 left-0 z-50 w-72 shrink-0 border-r border-black/10 dark:border-white/10 flex flex-col h-full bg-gray-50 dark:bg-[#0b0e1a] md:bg-gray-50/60 dark:md:bg-white/[0.02] transition-transform duration-200 md:static md:translate-x-0 ${
+          open ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="p-3 flex flex-col gap-2 border-b border-black/5 dark:border-white/5">
         <div className="relative">
           <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -57,7 +70,10 @@ export function Sidebar({ notes, selectedId, onSelect, onCreate, onDelete }: Sid
         </div>
 
         <button
-          onClick={onCreate}
+          onClick={() => {
+            onCreate();
+            onClose();
+          }}
           className="flex items-center justify-center gap-1.5 text-[13px] font-medium py-1.5 rounded-md bg-violet-600 hover:bg-violet-500 text-white transition-colors"
         >
           <Plus size={14} /> New Note
@@ -89,7 +105,10 @@ export function Sidebar({ notes, selectedId, onSelect, onCreate, onDelete }: Sid
         {filtered.map((n) => (
           <div
             key={n.id}
-            onClick={() => onSelect(n.id)}
+            onClick={() => {
+              onSelect(n.id);
+              onClose();
+            }}
             className={`group mx-2 my-0.5 px-3 py-2 rounded-md cursor-pointer transition-colors ${
               selectedId === n.id
                 ? 'bg-violet-100 dark:bg-violet-500/15'
@@ -111,12 +130,13 @@ export function Sidebar({ notes, selectedId, onSelect, onCreate, onDelete }: Sid
               </button>
             </div>
             <div className="text-[11.5px] text-gray-400 truncate mt-0.5">
-              {n.content.replace(/[#*`\[\]]/g, '').slice(0, 60) || 'Empty note'}
+              {n.content.replace(/[#*`[\]]/g, '').slice(0, 60) || 'Empty note'}
             </div>
             <div className="text-[10.5px] text-gray-400 mt-1">{relativeTime(n.updatedAt)}</div>
           </div>
         ))}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -1,6 +1,6 @@
 import type { Note } from './db';
 
-const WIKILINK_RE = /\[\[([^\[\]|]+?)(?:\|([^\[\]]+?))?\]\]/g;
+const WIKILINK_RE = /\[\[([^[\]|]+?)(?:\|([^[\]]+?))?\]\]/g;
 
 export interface WikiLinkMatch {
   raw: string;

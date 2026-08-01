@@ -15,6 +15,7 @@ export default function App() {
   const [ready, setReady] = useState(false);
   const [view, setView] = useState<'notes' | 'graph'>('notes');
   const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const notes = useAllNotes();
 
@@ -74,11 +75,14 @@ export default function App() {
         theme={theme}
         onToggleTheme={toggleTheme}
         onOpenToday={handleOpenToday}
+        onOpenSidebar={() => setSidebarOpen(true)}
       />
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden relative">
         <Sidebar
           notes={notes}
           selectedId={selectedId}
+          open={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
           onSelect={(id) => {
             setSelectedId(id);
             setView('notes');
